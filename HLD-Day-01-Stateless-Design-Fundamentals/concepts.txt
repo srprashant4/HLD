@@ -1,0 +1,90 @@
+1) What are stateless services?
+-> A stateless service treats every request as brand new. It does not rely on Previous requests, Server memory, Session stored inside the service. Instead, All required data comes with the request (JWT, headers, request body) Or from external systems (DB, cache). It is powerful because any server can handle any request, you can add/remove servers freely, load balancer can route anywhere. This enables Horizontal scaling, High availability and Fault tolerance.
+-> Key traits:
+a) No stored session or history
+b) Every request must include all needed information
+c) Easier to scale and cache
+d) More fault-tolerant
+
+-> Examples:
+a) HTTP (by default)
+b) REST APIs
+c) A calculator API where each request includes the full expression
+
+-> Pros:
+a) Simple design
+b) High scalability
+c) Easy load balancing
+
+-> Cons:
+a) Repeated data sent each time
+b) Can be inefficient for long workflows
+
+
+2) What are stateful services?
+-> The system remembers previous interactions and uses that context for future requests. 
+
+->Key traits:
+a) Maintains session or stored state
+b) Requests depend on previous ones
+c) More complex to scale
+d) Often faster for ongoing interactions
+
+-> Examples:
+a) User login sessions
+b) Shopping carts
+c) TCP connections
+d) Multiplayer game servers
+
+-> Pros:
+a) Better user experience for workflows
+b) Less repeated data
+c) Natural for conversations and transactions
+
+-> Cons:
+a) Harder to scale
+b) Requires session management
+c) Risk of state loss
+
+3) Role of a Load Balancer:
+-> A load balancer sits between clients and servers and distributes incoming traffic so no single server is overwhelmed, improving performance, availability, and reliability.
+
+-> Core Roles of a Load Balancer:
+a) Traffic Distribution: 
+i) Spreads requests across multiple backend servers. 
+Common algorithms: Round Robin, Least Connections, Weighted distribution and Hash-based (IP, URL, session).
+
+b) High Availability & Fault Tolerance: 
+i) Detects unhealthy servers (health checks)
+ii) Stops sending traffic to failed servers
+iii) Ensures service continuity.
+
+c) Scalability: 
+i) Enables horizontal scaling (add/remove servers easily)
+ii) Handles traffic spikes efficiently.
+
+d) Performance Optimization: 
+i) Reduces server overload
+ii) Can terminate SSL/TLS (offloading encryption), Supports caching and compression (some types).
+
+e) Session Management (for Stateful Apps): 
+i) Maintains session persistence (sticky sessions)
+ii) Routes the same client to the same backend when required
+
+f) Security Enhancement
+i) Hides backend server details
+ii) Protects against DDoS (rate limiting)
+iii) Can integrate with WAF (Web Application Firewall)
+
+
+4) Types of Load Balancers:
+-> Based on OSI Layer:
+a) Layer 4 (Transport): Routes based on IP/port (fast, less intelligent)
+b) Layer 7 (Application): Routes based on HTTP headers, URLs, cookies (more control)
+
+-> Based on Deployment:
+a) Hardware load balancers
+b) Software (NGINX, HAProxy)
+c) Cloud-managed (AWS ELB, Azure Load Balancer)
+
+Interview one-liner: A load balancer improves application performance and reliability by distributing traffic across multiple servers while ensuring availability, scalability, and fault tolerance.

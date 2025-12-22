@@ -1,0 +1,16 @@
+Question-1) Why do we prefer stateless controllers?
+Answer) Stateless controllers allow horizontal scaling and fault tolerance because any instance can serve any request without relying on in-memory state.
+
+Question-2) What problem occurs if the service is stateful and scaled?
+Answer) Suppose you have 1 Service -> It works fine. But when we scale to 3 instances behind a load balancer, now the Request 1 goes to Server A, Server A stores user state in memory, Request 2 goes to Server B. Problem: Server B has no idea about the previous request, User sees errors, lost data, random behavior. This causes: Session inconsistency, Sticky sessions (bad for scale), Harder failover and Production nightmares.
+Note: JWT exists specifically to avoid stateful servers. Instead of: “Server remembers who you are”, We say: “Each request proves who you are”. That’s stateless design in action.
+
+Question-3) Why is stateless design important when we scale services?
+Answer) Stateless design is important because any server instance can handle any request independently, without relying on stored sessions or in-memory data. This makes horizontal scaling, load balancing, and failover easier and more reliable.
+
+Question-4) If one server instance goes down in production, how does stateless design help without the user even noticing?
+Answer) With Stateless services, if an instance goes down, the load balancer can immediately route the requests to another healthy instance because no user state is tied to the failed server. This ensures seamless failover without user disruption.
+Note: Cloud auto-scaling helps capacity, but it does NOT guarantee continuity. Stateless design guarantees continuity and makes auto-scaling effective.
+
+Question-5) Why do stateful services still exist?
+Answer) Stateful services still exist because some problems are inherently stateful, and in certain scenarios—such as performance optimization, simplicity at low scale, or legacy constraints—the tradeoffs of stateful design are acceptable.
