@@ -1,0 +1,83 @@
+# Day 2 – Load Balancer and Failure Handling
+
+## Why Clients Cannot Call Service Instances Directly
+
+In modern scalable systems, applications usually run multiple instances of the same service.
+Clients cannot directly call these instances because:
+
+- Instance IPs are dynamic and change frequently
+- Instances can fail, restart, or be terminated
+- Clients have no visibility into instance health
+- Traffic may overload a single instance while others remain idle
+
+An intermediate component is required to abstract these complexities.
+
+---
+
+## What Is a Load Balancer?
+
+A Load Balancer (LB) acts as a **single stable entry point** for clients and distributes incoming traffic across multiple backend service instances.
+
+The load balancer hides:
+- Instance discovery
+- Health status
+- Scaling behavior
+
+from the client.
+
+---
+
+## Core Problems Solved by a Load Balancer
+
+### 1. Instance Discovery
+Service instances scale up and down dynamically.
+The load balancer maintains an up-to-date list of active instances and routes traffic accordingly.
+
+---
+
+### 2. Health Checks
+The load balancer continuously monitors backend instances using health checks.
+If an instance becomes unhealthy, it is automatically removed from traffic routing.
+
+This prevents clients from sending requests to failed or degraded services.
+
+---
+
+### 3. Load Distribution
+Even healthy instances can become overloaded.
+The load balancer distributes traffic using algorithms such as:
+- Round-robin
+- Least connections
+- Weighted routing
+
+This ensures optimal utilization and consistent performance.
+
+---
+
+### 4. Failure Isolation
+If a service instance crashes or becomes unreachable:
+- The load balancer stops routing traffic to it
+- Remaining healthy instances continue serving requests
+
+When combined with stateless services, this enables seamless failover with minimal user impact.
+
+---
+
+## Key Insight
+
+A load balancer is **not just for scaling**.
+
+> Its primary responsibility is **failure handling and reliability**.  
+> Traffic distribution and scalability are secondary benefits.
+
+---
+
+## Load Balancer and Stateless Services
+
+Stateless services do not store user session data in memory.
+Because of this:
+- Any request can be handled by any instance
+- Load balancers can freely route traffic
+- Instance failures do not affect user sessions
+
+Stateless design and load balancing together form the foundation of horizontally scalable systems.

@@ -1,0 +1,49 @@
+# Day 2 – Interview Questions: Load Balancer
+
+## 1. Why can’t clients directly call service instances?
+
+Clients cannot directly call service instances because they have no awareness of instance availability, health, or load.
+Without an intermediary, requests may hit failed or overloaded instances, leading to instability and poor user experience.
+
+---
+
+## 2. What problems does a load balancer solve?
+
+A load balancer solves:
+- Instance discovery
+- Health-based routing
+- Load distribution
+- Failure isolation
+
+It provides a stable entry point and improves system availability and reliability.
+
+---
+
+## 3. What happens if a load balancer does not perform health checks?
+
+Without health checks, a load balancer may continue routing traffic to unhealthy or failed instances, causing increased errors and degraded user experience.
+This defeats the primary purpose of using a load balancer for high availability.
+
+---
+
+## 4. Is a load balancer mainly used for scaling?
+
+No.  
+A load balancer is primarily used for **failure handling and reliability**.
+Scalability is a secondary benefit that becomes effective when combined with stateless services.
+
+---
+
+## 5. How do load balancers and stateless services work together?
+
+Stateless services allow any instance to handle any request.
+This enables the load balancer to freely route traffic to healthy instances, ensuring seamless failover and horizontal scalability.
+
+---
+
+## 6. What is the difference between auto-scaling and load balancing?
+
+- Auto-scaling manages **capacity** by adding or removing instances
+- Load balancing manages **traffic routing** and **failure handling**
+
+Both are required for a resilient system.
