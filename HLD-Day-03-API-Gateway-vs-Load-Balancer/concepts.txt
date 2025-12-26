@@ -99,3 +99,52 @@ API Gateway and Load Balancer are complementary, not interchangeable.
 | Auth / JWT        | ✅                 | ❌                  |
 
 ---
+
+## DNS and Front Door.
+
+Flow:
+
+    Client
+    ↓
+    DNS / Azure Front Door
+    ↓
+    [ LB ]  → API Gateway instance A
+            → API Gateway instance B
+    ↓
+    API Gateway (routing, auth, rate limit)
+    ↓
+    [ Service LB ]
+    ↓
+    Service Instance 1
+    Service Instance 2
+    Service Instance 3
+
+DNS: 
+    - DNS converts names → IP addresses. Without DNS, You’d have to remember IP addresses.
+    - DNS does NOT: Load balancing, Authentication, Health checks. It only tells: This is the address to contact.
+
+Front Door:
+    - Think of Azure Front Door (or AWS CloudFront / ALB) as: A global, intelligent entry gate to your system.
+    - Front Door sits after DNS, before your system.
+    - Flow:
+        Client
+        ↓
+        DNS (name → IP)
+        ↓
+        Front Door
+        ↓
+        API Gateway / Services
+    - What Front Door DOES: Routes traffic to nearest region, Performs health checks, Handles SSL termination, Global load balancing, Failover between regions.
+    - What it does NOT do: Business logic, Service routing based on APIs.
+    
+-> Why Front Door Exists (The Real Reason):
+   Without Front Door:
+    - Users in India hit US servers ❌
+    - Region failure = total outage ❌
+    - No global traffic optimization ❌
+   With Front Door:
+    - User hits nearest healthy region
+    - Failover is automatic
+    - Latency improves massively.
+
+---

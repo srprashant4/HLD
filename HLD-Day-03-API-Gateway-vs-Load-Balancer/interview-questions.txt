@@ -65,3 +65,56 @@ c. Method-based routing
 d. Version-based routing
     - /v1/users → user-service-v1
     - /v2/users → user-service-v2
+
+---
+
+## 8. Suppose your API Gateway is down. What happens to your system? How would you design to avoid this becoming a single point of failure?
+
+- If an API Gateway instance goes down, it should not impact the system because API Gateways are typically deployed in a highly available manner.
+- In cloud environments like Azure, the API Gateway runs behind a managed load balancer or front-door service. Multiple gateway instances 
+  are deployed across availability zones, and health checks ensure that traffic is routed only to healthy instances.
+- If one instance fails, the load balancer stops routing traffic to it and directs requests to other healthy gateway instances. 
+  Auto-scaling can also spin up new instances if required.
+- This design ensures that the API Gateway itself does not become a single point of failure.
+- Clients never hit a single gateway instance. They hit: DNS, Azure Front Door, Cloud Load Balancer
+- This component: Distributes traffic across multiple gateway instances, Performs health checks, Handles failures.
+- Flow:
+
+    Client
+    ↓
+    DNS / Azure Front Door
+    ↓
+    [ LB ]  → API Gateway instance A
+            → API Gateway instance B
+    ↓
+    API Gateway (routing, auth, rate limit)
+    ↓
+    [ Service LB ]
+    ↓
+    Service Instance 1
+    Service Instance 2
+    Service Instance 3
+
+---
+
+## 9. Where should authentication be handled — at the API Gateway or inside each microservice? Why?
+
+- It depends on the system design and security requirements.
+- If authentication logic is common across services, such as validating JWT tokens or OAuth access tokens, it makes sense to 
+  handle authentication at the API Gateway. This centralizes security, avoids duplication, and allows backend services to focus purely on business logic.
+- However, authorization is often service-specific. Even after a request is authenticated at the gateway, individual services may need
+  to enforce their own authorization rules based on domain logic, roles, or permissions.
+- In more complex systems, a layered approach is used — authentication at the gateway and fine-grained authorization at the service level.
+  This follows the principle of defense in depth and ensures services remain secure even if the gateway layer is bypassed.
+
+-> Follow-up Question: Why not only gateway auth? Isn’t that enough?
+Answer: Relying only on gateway authentication assumes the gateway can never be bypassed. In distributed systems, services may be accessed 
+internally or via misconfigurations. Service-level authorization acts as a safety net and enforces domain-specific access control.
+
+---
+
+## 10. What’s the difference between DNS and Front Door?
+
+DNS only resolves a domain name to an IP address, whereas Front Door provides intelligent global traffic routing, health checks, and failover before requests enter the backend system.
+
+---
