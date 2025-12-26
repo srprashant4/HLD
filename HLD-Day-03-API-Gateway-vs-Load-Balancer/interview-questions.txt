@@ -1,0 +1,67 @@
+# Day 3 – Interview Questions: API Gateway vs Load Balancer
+
+## 1. What is the difference between an API Gateway and a Load Balancer?
+
+An API Gateway operates at the application boundary and handles client-facing concerns such as authentication, rate limiting, and routing to services.
+A Load Balancer operates at the infrastructure level and handles instance-level concerns such as health checks, load distribution, and failover.
+
+---
+
+## 2. Can an API Gateway replace a Load Balancer?
+
+No, an API Gateway cannot replace a Load Balancer. An API Gateway operates at the client and application boundary, 
+deciding which backend service should handle a request. A Load Balancer operates at the infrastructure level and is responsible 
+for instance-level concerns such as health checks, load distribution, and failover. Both are required and solve different problems.
+
+---
+
+## 3. Why are both used in microservice architectures?
+
+Microservices require:
+- A single entry point for clients (API Gateway)
+- Reliable traffic distribution and failure handling (Load Balancer)
+
+Using both ensures scalability, reliability, and clean separation of concerns.
+
+- API Gateway decides WHAT service to call.
+- Load Balancer decides WHICH INSTANCE should handle it.
+
+---
+
+## 4. Where does authentication typically happen?
+
+Authentication typically happens at the API Gateway so that backend services can remain focused on business logic.
+
+---
+
+## 5. Why not put one load balancer for all services?
+
+You can, but per-service load balancers allow independent scaling and failure isolation.
+
+---
+
+## 6. Can Kubernetes replace this?
+
+Kubernetes provides service discovery and internal load balancing, but API Gateway is still required for client-facing concerns.
+---
+
+## 7. How does the API Gateway know which service to call?
+
+The API Gateway does not guess. It follows explicit routing rules. Routing Mechanisms (Most Common → Less Common):
+
+a. Path-based routing (most common)
+    - /api/users/**     → User Service
+    - /api/orders/**    → Order Service
+    - /api/payments/**  → Payment Service
+
+b. Header-based routing
+    - X-Service-Type: PAYMENT → Payment Service
+    - Used in Internal APIs.
+
+c. Method-based routing
+    - POST /transactions → Payment Service
+    - GET  /transactions → Reporting Service
+
+d. Version-based routing
+    - /v1/users → user-service-v1
+    - /v2/users → user-service-v2

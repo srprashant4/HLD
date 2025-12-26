@@ -1,0 +1,101 @@
+# Day 3 – API Gateway vs Load Balancer
+
+## Why Both Exist
+
+In modern microservice architectures, both an API Gateway and a Load Balancer are required because they operate at different layers and solve different problems.
+
+---
+
+## Load Balancer
+
+A Load Balancer operates at the infrastructure level and focuses on:
+- Instance health checks
+- Load distribution
+- Failover and high availability
+
+It decides **which instance** of a service should receive a request.
+
+Load balancers do not handle application-level concerns such as authentication or API contracts.
+
+---
+
+## API Gateway
+
+An API Gateway operates at the client boundary and focuses on:
+- Authentication and authorization
+- Rate limiting and throttling
+- API versioning
+- Request validation
+- Routing requests to the correct backend service
+
+It decides **which service** should handle a request.
+
+---
+
+## How They Work Together
+
+Typical request flow:
+Client → API Gateway → Load Balancer → Service Instances
+
+- API Gateway determines the target service
+- Load Balancer selects a healthy instance of that service
+
+---
+
+## Key Insight
+
+API Gateway and Load Balancer are complementary, not interchangeable.
+
+---
+
+## Microservices Architecture with API Gateway (Flowchart)
+
+                 ┌──────────────────┐
+                 │     Clients      │
+                 │ (Web / Mobile /  │
+                 │  External APIs)  │
+                 └────────┬─────────┘
+                          │
+                          ▼
+                 ┌──────────────────┐
+                 │   API Gateway    │
+                 │------------------│
+                 │ • Auth (JWT)     │
+                 │ • Rate Limiting  │
+                 │ • Validation     │
+                 │ • API Versioning │
+                 │ • Routing        │
+                 └────────┬─────────┘
+            ┌─────────────┼─────────────┐
+            │             │             │
+            ▼             ▼             ▼
+     ┌────────────┐ ┌────────────┐ ┌────────────┐
+     │ Load       │ │ Load       │ │ Load       │
+     │ Balancer   │ │ Balancer   │ │ Balancer   │
+     │ (User Svc) │ │ (Order Svc)│ │ (Pay Svc)  │
+     └─────┬──────┘ └─────┬──────┘ └─────┬──────┘
+           │              │              │
+   ┌───────┼───────┐  ┌───┼───────┐  ┌───┼───────┐
+   ▼       ▼       ▼  ▼   ▼       ▼  ▼   ▼       ▼
+┌────┐ ┌────┐ ┌────┐┌────┐┌────┐┌────┐┌────┐┌────┐
+│ U1 │ │ U2 │ │ U3 ││ O1 ││ O2 ││ O3 ││ P1 ││ P2 │
+└────┘ └────┘ └────┘└────┘└────┘└────┘└────┘└────┘
+
+- Clients do not directly talk to individual services. All requests first go through an API Gateway, which acts as a single entry point.
+- The API Gateway handles cross-cutting concerns like authentication, rate limiting, validation, and routing.
+- Based on the API path or business capability, the gateway routes the request to the appropriate backend service.
+- This separation allows the API Gateway to focus on client concerns, while load balancers focus on infrastructure reliability.
+
+---
+
+## API Gateway vs Load Balancer
+
+| Concern           | API Gateway       | Load Balancer      |
+| ----------------- | ----------------- | ------------------ |
+| Service discovery | ❌                 | ✅                  |
+| Instance health   | ❌                 | ✅                  |
+| Request routing   | ✅ (service-level) | ✅ (instance-level) |
+| Rate limiting     | ✅                 | ❌                  |
+| Auth / JWT        | ✅                 | ❌                  |
+
+---
