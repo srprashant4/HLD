@@ -109,6 +109,16 @@ Less control, tighter coupling.
 
 Complex but useful at scale.
 
+Side-by-Side Comparison:
+
+| Strategy      | Read Owner | Write Owner   | Consistency | Cache Dependency |
+| ------------- | ---------- | ------------- | ----------- | ---------------- |
+| Cache-Aside   | App        | App           | Medium      | Low              |
+| Read-Through  | Cache      | App           | Medium      | High             |
+| Write-Through | Cache      | Cache         | Strong      | Very High        |
+| Write-Behind  | Cache      | Cache (async) | Weak        | Very High        |
+
+
 ---
 
 ## 6. Handling Cache Failures
