@@ -1,0 +1,55 @@
+## 1. Why Do We Use Caching?
+“Caching improves performance by reducing latency and load on the database by serving frequently accessed data from faster storage like memory.”
+
+---
+
+## 2. Where Can Caching Be Placed?
+
+“Caching can exist at multiple layers — client, CDN, API Gateway, application, and database. Each layer trades off latency, freshness, 
+and control, and effective system design uses the right cache at the right layer.”
+
+---
+
+## 3. What Kind of Data Should Not Be Cached?
+“Data that is highly volatile or real-time in nature should generally not be cached because frequent updates can lead to stale 
+responses or excessive cache invalidation, which defeats the purpose of caching. Data that has strong consistency requirements, such as 
+financial balances or inventory counts, must be cached very carefully or avoided altogether unless strict invalidation strategies are in 
+place. Additionally, sensitive or security-critical data should not be cached in shared or insecure cache layers, as caches are often 
+memory-based and may not enforce the same access controls as databases.”
+
+---
+
+## 4. How Do You Maintain Cache and Database Consistency?
+“Cache consistency can be maintained using patterns like cache-aside, write-through, and event-based invalidation. Cache-aside is most 
+commonly used, where the application invalidates cache entries on data updates and repopulates them on demand. For stricter consistency, 
+event-driven approaches using CDC or messaging systems can be used to invalidate or update cache entries.”
+
+---
+
+## 5. What Happens If the Cache Goes Down?
+“A system should never be solely dependent on cache. The database should always remain the source of truth.
+If the cache goes down, the application should gracefully fall back to the database to continue serving requests, albeit with higher 
+latency. To prevent cascading failures, a circuit breaker can be used to detect repeated cache failures and temporarily bypass cache 
+calls, routing traffic directly to the database until the cache recovers. This ensures resilience and prevents cache outages from bringing
+down the entire system.”
+
+---
+
+## 6. Is Cache a Source of Truth?
+“No. The database is always the source of truth. Cache is an optimization layer used to improve performance and scalability.”
+
+---
+
+## 7. Common Interview Pitfalls (Avoid These)
+❌ Treating cache as mandatory dependency
+❌ Saying real-time data should never be cached
+❌ Ignoring cache failure scenarios
+❌ Forgetting invalidation strategies
+
+---
+
+## 8. Key One-Liners for Interviews
+- “Cache improves latency by reducing distance, disk access, and repeated computation.”
+- “Cache should optimize reads, not replace the database.”
+- “Cache invalidation is one of the hardest problems in system design.”
+- “Graceful degradation is critical when cache is unavailable.”

@@ -1,0 +1,119 @@
+## 1. What is Caching and Why It Exists
+Caching is a performance optimization technique where frequently accessed data is stored in faster storage (usually memory) so that 
+repeated expensive operations like database calls or heavy computations can be avoided.
+
+Caching primarily:
+- Reduces latency
+- Reduces load on databases
+- Improves system throughput
+- Improves user experience
+
+The database always remains the source of truth. Cache is only an optimization layer.
+
+---
+
+## 2. What Exactly Becomes Faster with Caching
+Caching improves performance by:
+- Reducing network hops
+- Avoiding disk I/O
+- Avoiding repeated computations
+- Reducing contention on the database
+- Serving data from memory instead of disk
+
+As requests move closer to the client and memory, response times decrease significantly.
+
+---
+
+## 3. Layers Where Caching Can Exist
+Caching can exist at multiple layers in a system:
+
+3.1 Client-Side Cache:
+- Browser cache
+- Mobile app cache
+- HTTP cache (Cache-Control, ETag)
+Fastest possible cache since no network call is required.
+
+3.2 CDN Cache
+- Azure CDN, CloudFront, Cloudflare
+- Caches static assets and public GET APIs
+- Reduces geographical latency
+
+3.3 API Gateway Cache:
+- Caches common API responses
+- Reduces backend service load
+- Limited flexibility, mainly used for idempotent requests
+
+3.4 Application-Level Cache
+- In-memory cache (local)
+- Distributed cache (Redis, Memcached)
+Most commonly used cache layer with full business control.
+
+3.5 Database Cache
+- Buffer cache
+- Query cache
+- Index cache
+Usually managed automatically by the database engine and should not be relied upon alone for scalability.
+
+Flow Chart:
+        Client Cache
+        ↓
+        CDN Cache
+        ↓
+        API Gateway Cache
+        ↓
+        Application Cache
+        ↓
+        Database Cache
+        ↓
+        Disk
+
+---
+
+## 4. What Data Should Not Be Cached
+Data that should be avoided or cached carefully:
+- Highly dynamic or real-time data
+- Strongly consistent data (e.g., balances, inventory)
+- Security-sensitive or confidential data
+- User-specific data in shared cache without proper isolation
+
+Caching such data can result in stale responses or security risks.
+
+---
+
+## 5. Cache Consistency Strategies
+
+5.1 Cache-Aside (Lazy Loading):
+- Application checks cache first
+- On miss, fetches from DB and updates cache
+- Cache invalidated on data updates
+
+Most widely used strategy.
+
+5.2 Read-Through Cache
+- Cache itself loads data from DB on miss
+- Application interacts only with cache
+
+Less control, tighter coupling.
+
+5.3 Write-Through Cache
+- Writes go to cache first, then DB synchronously
+- Ensures consistency but increases write latency
+
+5.4 Write-Behind (Write-Back) Cache
+- Writes go to cache, DB updated asynchronously
+- High performance but risk of data loss
+
+5.5 Event-Based / Trigger-Based Invalidation
+- Cache invalidated based on DB change events
+- Often implemented using CDC, messaging systems
+
+Complex but useful at scale.
+
+---
+
+## 6. Handling Cache Failures
+
+- Cache should never be a hard dependency
+- Database must always be reachable as fallback
+- System should gracefully degrade when cache is unavailable
+- Circuit breaker pattern can be used to bypass cache on repeated failures
