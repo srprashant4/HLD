@@ -1,0 +1,49 @@
+-> Caching – Interview Questions:
+
+1) What is caching and why is it used?
+-> Caching stores frequently accessed data closer to the application to reduce latency, database load, and repeated computation.
+
+2) Is cache a source of truth?
+-> No. Cache is an optimization layer. The database must always remain the source of truth.
+
+3) Explain L1 and L2 cache
+-> L1 cache is application-local and extremely fast. L2 cache is distributed and shared across instances, offering consistency and scalability.
+
+4) Why do we need L1 cache if Redis exists?
+-> L1 cache reduces network calls, protects Redis from hot-key overload, and improves latency.
+
+5) Explain cache-aside strategy
+-> The application explicitly loads data into cache on reads and updates cache on writes. It provides loose coupling and graceful degradation.
+
+6) Difference between read-through and write-through cache
+-> Read-through shifts read responsibility to cache, while write-through ensures cache consistency by routing writes through cache.
+
+7) What is write-behind caching?
+-> Writes are stored in cache and asynchronously persisted to the database, improving throughput but introducing eventual consistency.
+
+8) What is cache eviction and why is it needed?
+-> Eviction removes entries when cache reaches capacity. Common strategies include LRU and LFU.
+
+9) What is cache stampede?
+-> A spike of concurrent requests hitting an expired cache key, overwhelming the database.
+
+10) How do you prevent cache stampede?
+-> Using locks, stale-while-revalidate, and TTL jitter.
+
+11) What are hot keys?
+-> Keys that receive disproportionate traffic and can overload cache nodes.
+
+12) How do you handle hot keys?
+-> L1 caching, key sharding, and cache replication.
+
+13) What is cache penetration?
+-> Repeated access to non-existent data causing cache misses and repeated DB hits.
+
+14) How do you prevent cache penetration?
+-> Cache null values, use Bloom filters, and validate inputs.
+
+15) How do you handle cache failures?
+-> Fallback to database, use circuit breakers, and allow graceful degradation.
+
+*** Final Interview Tip
+-> Strong candidates explain trade-offs, failure handling, and real-world behavior instead of memorizing definitions.
