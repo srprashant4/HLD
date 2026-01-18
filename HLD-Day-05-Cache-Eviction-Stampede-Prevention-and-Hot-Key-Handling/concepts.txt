@@ -27,7 +27,7 @@ By the end of today, you should be able to:
           Recent access predicts future access.
 
       Problems:
-          i) Fails during scan-heavy workloads
+          i) Fails during scan-heavy workloads. LRU works well for repeated access, but bulk one-time access can push out important data.
           ii) Hot keys can evict useful cold-but-important data
 
       Used in:
