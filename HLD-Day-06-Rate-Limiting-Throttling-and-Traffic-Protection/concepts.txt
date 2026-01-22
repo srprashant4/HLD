@@ -1,0 +1,176 @@
+# Day 6 – Rate Limiting (Deep Concepts)
+
+## 1. What is Rate Limiting?
+
+Rate limiting is a defensive mechanism used to control how many requests a client can make to a system within a given time window. Its goals are:
+
+* Protect backend systems from overload
+* Ensure fair usage among users
+* Maintain predictable performance
+* Prevent abuse (bots, scraping, brute force, DDoS)
+
+Rate limiting is not about performance optimization alone; it is about **system safety and stability**.
+
+---
+
+## 2. Why Rate Limiting Becomes Hard in Distributed Systems
+
+In modern systems, traffic flows through multiple instances behind load balancers. If each instance maintains its own rate-limit counters:
+
+* Requests get distributed across instances
+* Each instance sees only partial traffic
+* Users can bypass limits unintentionally
+
+**Key insight:** Rate-limiting state must be **shared across instances**.
+
+---
+
+## 3. Core Rate Limiting Algorithms
+
+### 3.1 Fixed Window
+
+* Time is divided into fixed intervals (e.g., 1 minute)
+* Requests are counted per window
+* Simple to implement
+
+**Problem:** Boundary spike (users can exceed limits around window resets)
+
+---
+
+### 3.2 Sliding Window
+
+* Tracks timestamps of individual requests
+* More accurate than fixed window
+* Prevents boundary issues
+
+**Trade-off:** Higher memory and computation cost
+
+---
+
+### 3.3 Leaky Bucket
+
+* Requests enter a queue
+* Processed at a constant rate
+* Smooths bursty traffic
+
+**Use case:** When downstream systems need steady traffic
+
+---
+
+### 3.4 Token Bucket
+
+* Tokens are added at a fixed rate
+* Each request consumes a token
+* Allows bursts while enforcing long-term limits
+
+**Why popular:** Balances user experience and system protection
+
+---
+
+## 4. Distributed Rate Limiting with Redis
+
+Redis is commonly used because it provides:
+
+* Shared state across instances
+* Extremely fast access
+* Atomic operations
+* TTL-based expiration
+
+Typical data stored per key:
+
+* Remaining tokens or request count
+* Timestamp of last refill/reset
+
+Atomicity is critical to avoid race conditions when multiple requests arrive simultaneously.
+
+---
+
+## 5. Atomicity and Concurrency
+
+Without atomic operations:
+
+* Multiple requests may read stale values
+* Limits can be exceeded under concurrency
+
+**Solutions:**
+
+* Redis atomic commands (INCR, EXPIRE)
+* Redis Lua scripts (preferred for complex logic)
+
+---
+
+## 6. Where Rate Limiting Lives (Layered Defense)
+
+* CDN / Front Door: IP-based abuse protection
+* API Gateway: User, API key, endpoint limits
+* Service Layer: Business-specific constraints
+* Database: Last-resort protection
+
+**Best practice:** Layered rate limiting
+
+---
+
+## 7. Failure Handling Strategies
+
+### Fail-Open
+
+* Allow traffic if rate limiter fails
+* Preserves availability
+* Risks backend overload
+
+### Fail-Closed
+
+* Block traffic
+* Protects backend
+* Impacts user experience
+
+### Hybrid (Preferred)
+
+* Temporary fallback limits
+* Circuit breaker-based decisions
+
+Rate limiting systems must have a clearly defined failure mode.
+
+---
+
+## 8. What Can Be Rate Limited
+
+* Per IP
+* Per user
+* Per API key
+* Per endpoint
+
+Real systems often combine multiple dimensions.
+
+---
+
+## 9. Cloud Mapping
+
+### Azure
+
+* Azure Front Door → Edge protection
+* Azure API Management → Token bucket–based throttling
+* Azure Redis Cache → Distributed state
+
+### AWS
+
+* CloudFront + WAF
+* API Gateway
+* ElastiCache (Redis)
+
+---
+
+## 10. Rate Limiting vs Throttling
+
+* Rate limiting: Hard enforcement of limits
+* Throttling: Gradual slowdown of responses
+
+---
+
+## 11. Key Takeaways
+
+* Rate limiting is mandatory in modern systems
+* Distributed systems require shared state
+* Token Bucket is the most practical algorithm
+* Redis + API Gateway is the industry standard
+* Failure handling is as important as correctness

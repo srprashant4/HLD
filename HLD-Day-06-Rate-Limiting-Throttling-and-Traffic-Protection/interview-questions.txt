@@ -1,0 +1,90 @@
+# Day 6 – Rate Limiting (Interview Questions)
+
+## 1. Core Understanding
+
+**Q1. Why do we need rate limiting?**
+To protect systems from overload, ensure fair usage, prevent abuse, and maintain predictable performance under traffic spikes.
+
+**Q2. Why does rate limiting break in distributed systems?**
+Because requests are spread across multiple instances, and local counters cannot track global request volume.
+
+---
+
+## 2. Algorithms
+
+**Q3. Explain Fixed Window and its drawback.**
+Counts requests in fixed time intervals but suffers from boundary spike issues.
+
+**Q4. Why is Sliding Window more accurate?**
+Because it tracks request timestamps instead of coarse time buckets.
+
+**Q5. When would you use Leaky Bucket?**
+When downstream systems require smooth, constant traffic flow.
+
+**Q6. Why is Token Bucket most commonly used?**
+It allows bursts while enforcing a long-term average rate and is relatively simple to implement.
+
+---
+
+## 3. Distributed Design
+
+**Q7. Why is Redis preferred over databases for rate limiting?**
+Redis is in-memory, extremely fast, supports atomic operations, and is designed for high concurrency.
+
+**Q8. Why is atomicity important in rate limiting?**
+To prevent race conditions where concurrent requests bypass limits.
+
+---
+
+## 4. Placement & Architecture
+
+**Q9. Where should rate limiting be implemented?**
+Primarily at the API Gateway, with additional limits at edge and service layers.
+
+**Q10. Can rate limiting guarantee system stability?**
+No. It reduces risk but must be combined with autoscaling, circuit breakers, and backpressure.
+
+---
+
+## 5. Failure Scenarios
+
+**Q11. What happens if Redis goes down?**
+Systems must choose between fail-open, fail-closed, or hybrid strategies based on business priorities.
+
+**Q12. What is the best failure strategy?**
+A hybrid approach with temporary fallback limits and circuit breakers.
+
+---
+
+## 6. Real-World Design
+
+**Q13. How would you rate limit a public partner API?**
+API-key–based limits, Token Bucket algorithm, Redis-backed state, enforced at the API Gateway.
+
+**Q14. How do you rate limit in multi-region systems?**
+Use regional limits with local Redis instances and accept minor inconsistencies.
+
+---
+
+## 7. Conceptual Questions
+
+**Q15. Difference between rate limiting and throttling?**
+Rate limiting blocks requests; throttling slows them down.
+
+**Q16. Why is layered rate limiting recommended?**
+Because each layer protects the next and prevents cascading failures.
+
+---
+
+## 8. Red Flags (What Not to Say)
+
+* Store counters only in memory
+* Rely on sticky sessions
+* Use databases for high-frequency rate limiting
+* Treat rate limiting as optional
+
+---
+
+## 9. One-Line Interview Summary
+
+"Rate limiting is a layered, distributed safety mechanism that protects systems by controlling traffic using shared state, atomic operations, and well-defined failure strategies."
