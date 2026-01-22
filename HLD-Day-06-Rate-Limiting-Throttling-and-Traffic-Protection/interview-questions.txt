@@ -24,54 +24,69 @@ When downstream systems require smooth, constant traffic flow.
 **Q6. Why is Token Bucket most commonly used?**
 It allows bursts while enforcing a long-term average rate and is relatively simple to implement.
 
+**Q7. Which algorithm allows bursts but still controls average traffic?
+Token Bucket allows bursts but it still controls average traffic
+
+**Q8. Which algorithm can cause problems at time boundaries?
+Fixed Window suffers from boundary effects where users can exceed the effective limit by timing requests around window resets. This is known as the boundary spike problem.
+
+**Q9. If you want very smooth output even if input is bursty, which one do you choose?
+Leaky bucket keeps output smooth even if input is bursty
+
+**Q10. Your login API must block: “More than 5 attempts in the last 10 minutes”. Which algorithm fits best?
+Sliding Window fits best because it tracks timestamps
+
+**Q11. Which rate limiting algorithm is most commonly used in API Gateways? And why?
+Token Bucket is most commonly used because it allows bursts, keeps traffic controlled, and is easier to implement compared to others with similar benefits.
+
 ---
 
 ## 3. Distributed Design
 
-**Q7. Why is Redis preferred over databases for rate limiting?**
+**Q12. Why is Redis preferred over databases for rate limiting?**
 Redis is in-memory, extremely fast, supports atomic operations, and is designed for high concurrency.
 
-**Q8. Why is atomicity important in rate limiting?**
+**Q13. Why is atomicity important in rate limiting?**
 To prevent race conditions where concurrent requests bypass limits.
 
 ---
 
 ## 4. Placement & Architecture
 
-**Q9. Where should rate limiting be implemented?**
+**Q14. Where should rate limiting be implemented?**
 Primarily at the API Gateway, with additional limits at edge and service layers.
 
-**Q10. Can rate limiting guarantee system stability?**
+**Q15. Can rate limiting guarantee system stability?**
 No. It reduces risk but must be combined with autoscaling, circuit breakers, and backpressure.
 
 ---
 
 ## 5. Failure Scenarios
 
-**Q11. What happens if Redis goes down?**
+**Q16. What happens if Redis goes down?**
 Systems must choose between fail-open, fail-closed, or hybrid strategies based on business priorities.
 
-**Q12. What is the best failure strategy?**
+**Q17. What is the best failure strategy?**
 A hybrid approach with temporary fallback limits and circuit breakers.
 
 ---
 
 ## 6. Real-World Design
 
-**Q13. How would you rate limit a public partner API?**
+**Q18. How would you rate limit a public partner API?**
 API-key–based limits, Token Bucket algorithm, Redis-backed state, enforced at the API Gateway.
 
-**Q14. How do you rate limit in multi-region systems?**
+**Q19. How do you rate limit in multi-region systems?**
 Use regional limits with local Redis instances and accept minor inconsistencies.
 
 ---
 
 ## 7. Conceptual Questions
 
-**Q15. Difference between rate limiting and throttling?**
+**Q20. Difference between rate limiting and throttling?**
 Rate limiting blocks requests; throttling slows them down.
 
-**Q16. Why is layered rate limiting recommended?**
+**Q21. Why is layered rate limiting recommended?**
 Because each layer protects the next and prevents cascading failures.
 
 ---

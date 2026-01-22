@@ -135,12 +135,12 @@ Rate limiting systems must have a clearly defined failure mode.
 
 ## 8. What Can Be Rate Limited
 
-* Per IP
-* Per user
-* Per API key
-* Per endpoint
+* Per IP -> limits traffic from one network source
+* Per user -> limits an authenticated end user
+* Per API key -> limits a client application or service
+* Per endpoint -> limits access to a specific API route
 
-Real systems often combine multiple dimensions.
+Real systems often combine multiple dimensions, meaning a request might be limited by IP + API key + endpoint at the same time.
 
 ---
 
