@@ -1,0 +1,233 @@
+# Day 7 – Reliability Patterns & Idempotency (HLD)
+
+## 1. Why Reliability Patterns Matter
+
+Modern distributed systems fail **by default**:
+
+* Network is unreliable
+* Services are deployed independently
+* Timeouts and partial failures are common
+
+Reliability patterns exist to **limit blast radius**, **protect downstream systems**, and **ensure graceful degradation**.
+
+---
+
+## 2. Timeouts
+
+### What
+
+A maximum time a service waits for a response from a downstream system.
+
+### Why
+
+* Prevents threads from being blocked forever
+* Enables fail-fast behavior
+
+### Key Rule
+
+> Timeout should always be **lower** than the downstream timeout.
+
+---
+
+## 3. Retries
+
+### What
+
+Re-attempting a failed request.
+
+### Why Retries Are Dangerous
+
+* Can amplify load when downstream is already failing
+* Causes retry storms
+
+### Best Practices
+
+* Retry only **idempotent** operations
+* Use **exponential backoff**
+* Add **jitter** to avoid synchronized retries
+* Limit retry count
+
+---
+
+## 4. Circuit Breaker
+
+### States
+
+* **Closed**: normal operation
+* **Open**: fail fast, block requests
+* **Half-Open**: allow limited traffic to test recovery
+
+### Why
+
+* Prevents cascading failures
+* Gives downstream time to recover
+
+---
+
+## 5. Fail Fast Principle
+
+### Idea
+
+If a system is unhealthy, reject requests immediately instead of letting them pile up.
+
+### Benefits
+
+* Faster recovery
+* Predictable failure
+* Protects upstream systems
+
+---
+
+## 6. Idempotency
+
+### Definition
+
+An operation that produces the **same result** even if executed multiple times.
+
+### Why It Is Critical
+
+* Retries
+* Network failures
+* Client timeouts
+
+### Common Use Cases
+
+* Payments
+* Order creation
+* Inventory updates
+
+### Idempotent operations in REST applications:
+- GET
+- DELETE
+- PUT
+- PATCH
+
+### Not Idempotent operations in REST applications:
+- POST
+
+---
+
+## 7. Idempotency Key
+
+### What
+
+A unique key sent by the client to identify a request.
+
+### How It Works
+
+* Same key → same response
+* Prevents duplicate side effects
+
+### Storage Strategy
+
+* **Redis**: fast lookup
+* **Database**: source of truth
+
+---
+
+## 8. Payment Systems & Side Effects
+
+### Reality
+
+* Payments are external side effects
+* Cannot be rolled back reliably
+
+### Correct Approach
+
+* Persist payment state
+* Return ambiguous response on timeout
+* Resolve via idempotency
+
+---
+
+## 9. Real-World Flow (Payment)
+
+1. Client sends request with idempotency key
+2. Service checks Redis
+3. Fallback to DB if needed
+4. Call payment gateway
+5. Persist result
+6. Return consistent response
+
+---
+
+## 10. Key Takeaways
+
+* Never rollback external side effects
+* Always design for retries
+* Idempotency is mandatory, not optional
+* Redis accelerates, DB guarantees
+
+---
+
+### High-Level Payment ecosystem:
+Your app never talks directly to the bank. The real chain looks like this:
+
+Your App
+   |
+   v
+Payment Service (yours)
+   |
+   v
+Payment Gateway (Razorpay, Stripe, Adyen)
+   |
+   v
+Card Network (Visa / Mastercard / RuPay)
+   |
+   v
+Issuing Bank (user’s bank)
+
+-> What the payment gateway does
+1. Talk to banks
+2. Handle PCI compliance
+3.Perform fraud checks
+4.Return eventual results
+
+Once the gateway confirms success, money movement is real. You cannot “rollback” it safely.
+
+-> Why timeouts happen even when payment succeeds:
+1. Bank responds late
+2. Gateway responds late
+3. Network hiccup
+4. Your service times out first
+
+-> Result: 
+1. Payment succeeded
+2. Your service thinks it failed
+This is called a distributed uncertainty problem.
+
+-> Golden rule of Payments: Never assume failure just because you didn’t get a response.
+-> Always use idempotency keys and pass it down the chain.
+---
+
+### Actual Payment architecture in Applications:
+
+Client
+  |
+  |--- POST /pay (idempotency_key = X)
+  |
+Payment Service
+  |
+  |---> Redis (quick check)
+  |       |
+  |       |-- HIT → return cached response
+  |       |
+  |       |-- MISS
+  |
+  |---> Database (authoritative check)
+  |       |
+  |       |-- EXISTS → store in Redis → return
+  |       |
+  |       |-- NOT EXISTS
+  |
+  |---> Call Payment Gateway
+  |
+  |---> Save result in DB
+  |---> Save result in Redis (with TTL)
+  |
+  |---> Return response
+
+---
+
+### Best Defence-in-depth architecture for the applications:
+Rate Limiting (Control abusive traffic) -> Circuit Breaker (Stop calling failing dependencies) -> Backpressure (Signal overload downstream)
