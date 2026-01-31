@@ -165,6 +165,14 @@ Real systems often combine multiple dimensions, meaning a request might be limit
 * Rate limiting: Hard enforcement of limits
 * Throttling: Gradual slowdown of responses
 
+* Rate Limiting  → decides HOW MUCH
+* Throttling     → decides WHAT HAPPENS when exceeded
+
+| Concern                  | Examples                                    |
+| ------------------------ | ------------------------------------------- |
+| Rate limiting algorithms | Fixed Window, Sliding Window, Token Bucket  |
+| Throttling strategies    | Reject, Delay, Queue, Slow down, Prioritize |
+
 ---
 
 ## 11. Key Takeaways
