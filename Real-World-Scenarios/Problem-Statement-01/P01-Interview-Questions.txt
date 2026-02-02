@@ -1,0 +1,76 @@
+## Scenario-Based Interview Questions – Payment & Order Failure Handling
+
+Q1. What happens if payment succeeds but Order Service is down?
+Answer: Payment success is persisted in the Payments DB. Order confirmation is retried asynchronously via a queue until the Order 
+Service recovers.
+
+Q2. Why is Payment Service the source of truth?
+Answer: Because it handles money. Financial transactions must be strongly consistent and durable.
+
+Q3. Why not make Order Service synchronous?
+Answer: Because payment gateways are slow and unreliable. Blocking Order Service threads would reduce throughput and cause 
+cascading failures.
+
+Q4. How do you avoid duplicate order confirmations?
+Answer: Using idempotency keys (orderId or paymentId) during order confirmation.
+
+Q5. What is a Dead Letter Queue (DLQ)?
+Answer: A queue that stores messages that failed processing after multiple retries, allowing inspection and replay without 
+blocking the system.
+
+Q6. Why is notification failure acceptable but payment failure is not?
+Answer: Payment affects business correctness and money. Notifications only affect user experience.
+
+Q7. How do retries work safely here?
+Answer: Retries are safe because order confirmation is idempotent and retry attempts are limited with backoff.
+
+Q8. What happens if Order Service recovers after 10 minutes?
+Answer: It consumes pending events from the queue and confirms the orders without any user action.
+
+Q9. Can notification be sent twice?
+Answer: Yes, unless idempotency is applied at Notification Service. This is handled using (orderId, channel) tracking.
+
+Q10. What consistency model does this system use?
+Answer:
+1) Strong consistency for payments and orders
+1) Eventual consistency for notifications and side effects
+
+Final Interview One-Liner: “We design payment systems to never lose money, even if that means temporary inconsistency elsewhere.”
+
+----
+
+## Interview Questions – Order Created, Payment Down
+
+Q1. Why not make Order Service wait synchronously for payment?
+Answer: Because payment gateways are slow and unreliable. Blocking threads reduces throughput and causes cascading failures.
+
+Q2. How do you avoid double payment if user retries?
+Answer: Using idempotency keys stored in DB and cache.
+
+Q3. Why store idempotency keys in Redis?
+Answer: For faster lookups during retries while keeping DB as source of truth.
+
+Q4. What happens if Redis goes down?
+Answer: Payment Service falls back to DB.
+
+Q5. Why is payment consistency more important than order consistency?
+Answer: Because payment involves money. Order state can be updated later.
+
+Q6. What does the user see during payment timeout?
+Answer: Order exists with PAYMENT_PENDING status.
+
+Q7. How is final payment success detected?
+Answer: Via webhook from payment gateway.
+
+Q8. Why are webhooks necessary?
+Answer: Payment gateways process asynchronously and cannot rely on synchronous responses.
+
+Q9. What happens if webhook arrives twice?
+Answer: Idempotency ensures safe handling.
+
+Q10. What consistency model does this system use?
+Answer:
+1) Strong consistency for payments
+2) Eventual consistency for order confirmation & notifications
+
+Interview Closing Statement: “We design payment flows assuming failures, delays, and retries — correctness always wins over speed.”

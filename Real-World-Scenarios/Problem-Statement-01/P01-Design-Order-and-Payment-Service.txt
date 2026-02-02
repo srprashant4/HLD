@@ -1,0 +1,222 @@
+## Requirements:
+1) Functional (Accepted)
+    - Order cannot exist without payment
+    - Payment is mandatory
+    - Payment can fail
+    - Payment retries are allowed
+2) The system prioritizes correctness over availability for financial operations.
+
+----
+
+## Normal Flow [Happy Path Scenario]:
+1. User places an order from client application
+2. Request reaches API Gateway
+    - Authentication
+    - Rate limiting
+    - Request routing
+3. Load Balancer routes request to Order Service
+4. Order Service:
+    - Validates request
+    - Creates order in CREATED state
+    - Persists order in Orders DB
+5. Order Service calls Payment Service
+6 Payment Service:
+    - Generates idempotency key
+    - Initiates payment with external gateway
+7. Payment gateway processes payment successfully
+8. Gateway sends success response / webhook
+9. Payment Service:
+    - Updates payment state to SUCCESS
+    - Persists in Payments DB
+    - Updates cache
+10. Payment Service notifies Order Service
+11. Order Service:
+    - Updates order state to CONFIRMED
+12. Notification Service is triggered asynchronously
+13. User sees confirmed order
+
+----
+
+## Scenario-1: Order Created but Payment Service is Down
+
+1. Problem Statemet:
+    - A user places an order successfully, but during checkout:
+    - Payment Service is unavailable or times out
+    - The system must handle retries safely
+    - The user must not be charged multiple times
+    - The system must remain scalable and resilient
+
+2. Core Functional Requirements:
+    - Order cannot be confirmed without payment
+    - Payment is mandatory
+    - Payment service may fail or timeout
+    - User may retry payment
+    - No duplicate payment deductions
+
+3. Non-Functional Requirements
+    - High availability
+    - Strong consistency for payments
+    - Fault tolerance
+    - Idempotency
+    - Scalability under high traffic
+
+4. High-Level Architecture:
+    - Client → API Gateway → Load Balancer → Order Service → Payment Service → External Payment Gateway
+    - Additional components:
+        a. Redis (idempotency cache)
+        b. Payments DB
+        c. Orders DB
+        d. Message Queue (optional for retries)
+        e. Notification Service (async)
+
+5. Service Responsibilities
+    - API Gateway
+        a. Authentication & Authorization
+        b. Rate limiting
+        c. Request routing
+        d. Validation
+    - Load Balancer
+        a. Distributes traffic across instances
+        b. Performs health checks
+        c. Prevents instance overload
+    - Order Service
+        a. Creates orders
+        b. Maintains order lifecycle
+        c. Persists order state
+        d. Does not wait synchronously for payment completion
+    - Order States:
+        a. CREATED
+        b. PAYMENT_PENDING
+        c. CONFIRMED
+        d. FAILED
+    - Payment Service
+        a. Handles payment initiation
+        b. Talks to external gateways & banks
+        c. Maintains payment lifecycle
+        d. Guarantees idempotency
+    - Payment States:
+        a. INITIATED
+        b. IN_PROGRESS
+        c. SUCCESS
+        d. FAILED
+
+6. Order Creation Flow (Payment Down Case):
+    - Client places order
+    - API Gateway authenticates & routes request
+    - Order Service:
+        a. Creates order
+        b. Persists CREATED state
+    - Order Service calls Payment Service
+    - Payment Service:
+        a. Generates idempotency key
+        b. Stores (orderId, idempotencyKey) in DB + cache
+    - Payment gateway times out / is unavailable
+    - Payment state becomes IN_PROGRESS
+    - Order state becomes PAYMENT_PENDING
+    - Client sees: “Payment in progress / pending confirmation”
+
+7. Idempotency Handling
+    - Every payment attempt carries an idempotency key
+    - Stored in:
+        a. Payments DB (source of truth)
+        b. Redis (fast lookup with TTL)
+    - If user retries:
+        a. Payment Service checks idempotency key
+        b. Returns existing payment state
+        c. No duplicate deduction
+    
+8. Cache Usage (Payment Service)
+    - Redis stores: Payment state by idempotency key
+    - Cache is not source of truth
+    - DB is always updated first
+    - Cache is updated explicitly after DB write
+
+9. Payment Recovery Flow
+    - Payment gateway later completes transaction
+    - Gateway sends webhook to Payment Service
+    - Payment Service webhook handler:
+        a. Updates payment DB → SUCCESS
+        b. Updates cache
+    - Payment Service informs Order Service asynchronously
+    - Order state changes to CONFIRMED
+    - Notification Service triggered asynchronously
+
+10. Why Order & Payment Are Asynchronous
+    - Payment gateways are slow and unreliable
+    - Order Service should not block threads
+    - Prevents connection pool exhaustion
+    - Improves system throughput
+
+11. Failure Tolerance Summary:
+| Failure               | Handling             |
+| --------------------- | -------------------- |
+| Payment timeout       | Idempotency + retry  |
+| User retry            | Safe via idempotency |
+| Cache failure         | Fallback to DB       |
+| Payment gateway delay | Webhook-based update |
+
+12. Key Takeaway: Order creation is fast, payment confirmation is eventual, and money is never duplicated.
+
+----
+
+## Scenario-2: Payment Success but Order Service is Down
+
+1. Problem Statement:
+    - A user places an order and the payment is successfully processed by the external payment gateway and bank.
+    - However, the Order Service is temporarily unavailable at the time the Payment Service tries to confirm the order.
+    - The system must ensure:
+        a. No loss of money
+        b. No duplicate orders
+        c. Eventual consistency
+        d. Automatic recovery without manual intervention
+
+2. Key Design Principles Applied
+    - Payment Service as Source of Truth:
+        a. The Payments Database is the final source of truth for all payment-related states.
+        b. Once a payment reaches SUCCESS, it is never rolled back automatically.
+        c. This ensures financial correctness even during downstream failures.
+    - Asynchronous Communication Between Services
+        a. Payment Service does not synchronously block waiting for Order Service.
+        b. After payment success:
+            i. Payment Service emits an OrderConfirmation event
+            ii. Order Service consumes this event asynchronously
+        c. This prevents cascading failures and thread exhaustion.
+    - Idempotency for Safe Retries
+        a. Each order confirmation carries:
+            i. paymentId
+            ii. orderId (idempotency key)
+        b. Order Service ensures: Duplicate confirmations do not create duplicate orders
+        c. Retries are safe because the operation is idempotent.
+    - Retry with Backoff (Controlled)
+        a. If Order Service is down:
+            i. Payment Service retries after fixed/exponential backoff
+            ii. Retry attempts are capped
+        b. This avoids overwhelming a recovering service.
+    - Message Queue + Dead Letter Queue (DLQ)
+        a. Order confirmation events are published to a message queue.
+        b. If the Order Service fails to process a message after multiple retries:
+            i. The message is moved to a Dead Letter Queue (DLQ)
+        c. Why DLQ?
+            i. Prevents infinite retries
+            ii. Prevents message loss
+            iii. Allows operators to inspect and replay failed events
+    - Order Service Recovery Flow
+        a. Once Order Service is back:
+            i. It resumes consuming events from the queue
+            ii. Pending confirmations are processed
+            iii. Order state transitions from PAYMENT_PENDING → CONFIRMED
+    - Notification Service (Best-Effort Side Effect)
+        a. Triggered only after order confirmation
+        b. Fully asynchronous
+        c. Failures do not impact order or payment correctness
+        d. Uses retries + DLQ for failed notifications
+    - Failure Classification:
+        | Component            | Failure Impact          | Tolerance          |
+        | -------------------- | ----------------------- | -----------------  |
+        | Payment Service      | Financial loss          | ❌ Not tolerated   |
+        | Order Service        | Temporary inconsistency | ✅ Tolerated       |
+        | Notification Service | UX degradation          | ✅ Fully tolerated |
+    - Key Takeaway: Business correctness (money + order state) is always prioritized over user experience (notifications).
+
+----
+
